@@ -5,9 +5,15 @@
 //  Created by ZHENGSHOUDONG on 2017/12/7.
 //
 
+import Foundation
 import PerfectLib
 import PerfectHTTP
 import PerfectHTTPServer
+
+let workPath = NSHomeDirectory() + "/.ZDeploy"
+let configFilePath = workPath + "/config.json"
+let consoleLogFilePath = workPath + "/consoleLog.log"
+var port = 9999
 
 func handler(data: [String:Any]) throws -> RequestHandler {
     return {
@@ -26,7 +32,8 @@ func statusHandler(data: [String:Any]) throws -> RequestHandler {
         response.setHeader(.contentType, value: "application/json")
         response.status = .ok
         
-        response.setBody(string: "{\"code\": 0}") // 部署服务空闲状态
+        response.setBody(string: "{\"code\": 0}") // 空闲状态
+        response.setBody(string: "{\"code\": 1}") // 部署中
         
         response.completed()
     }
@@ -38,24 +45,56 @@ func startDeploy(data: [String:Any]) throws -> RequestHandler {
         response.setHeader(.contentType, value: "application/json")
         response.status = .ok
         
-        response.setBody(string: "")
+        response.setBody(string: "{\"code\": 0}") //出错!
+        response.setBody(string: "{\"code\": 1}") //开始部署
         
         response.completed()
     }
 }
 
 func initZDeploy() -> Void {
-    print("hello ZDeploy!")
+    print("Hello ZDeploy!")
     #if os(Linux)
         print("platform is not support!")
         exit(1)
     #endif
     
+    if File(configFilePath).exists {
+        do {
+            let configJson = try String.init(contentsOfFile: configFilePath, encoding: .utf8)
+            if configJson.isEmpty {
+                printLog(message: "The file config.json content is empty!", type: .error)
+                exit(1)
+            }
+            let configDict = JSON.init(parseJSON: configJson)
+            if configDict.isEmpty {
+                printLog(message: "The file config.json content is wrong!", type: .error)
+                exit(1)
+            }
+            port = configDict["port"].int ?? port
+        }catch {
+            printLog(message: "\(error)", type: .error)
+            exit(1)
+        }
+    }else {
+        do {
+            try Dir(workPath).create()
+            let str = String.init(format: "{\"port\": %d}", port)
+            try str.write(toFile: configFilePath , atomically: true, encoding: .utf8)
+            printLog(message: " file config.json is not exist!The file was auto created!", type: .error)
+            initZDeploy()
+            return
+        }catch {
+            printLog(message: "\(error)", type: .error)
+            exit(1)
+        }
+    }
+    
     let confData = [
         "servers": [
             [
                 "name": "ZDeploy",
-                "port": 9999,
+                "port": port,
                 "routes":[
                     ["method":"get", "uri":"/", "handler":handler],
                     ["method":"get", "uri":"/status", "handler":statusHandler],
