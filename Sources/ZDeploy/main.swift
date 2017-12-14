@@ -10,10 +10,15 @@ import PerfectLib
 import PerfectHTTP
 import PerfectHTTPServer
 
+let empty = ""
 let workPath = NSHomeDirectory() + "/.ZDeploy"
 let configFilePath = workPath + "/config.json"
 let consoleLogFilePath = workPath + "/consoleLog.log"
 var port = 9999
+
+var repository = empty // 仓库地址,用于拉取代码
+var deployPath = empty  // 部署路径
+var projectName = empty  // 项目名,不需要外部传入自动根据传入仓库地址计算
 
 func handler(data: [String:Any]) throws -> RequestHandler {
     return {
@@ -44,9 +49,27 @@ func startDeploy(data: [String:Any]) throws -> RequestHandler {
         request, response in
         response.setHeader(.contentType, value: "application/json")
         response.status = .ok
+        let body = request.postBodyString ?? empty
+        print(body)
+        let json = JSON.init(parseJSON: body)
         
-        response.setBody(string: "{\"code\": 0}") //出错!
-        response.setBody(string: "{\"code\": 1}") //开始部署
+        repository = json["repository"].string ?? empty
+        
+        print(repository)
+        
+        deployPath = json["deployPath"].string ?? empty
+        
+        print(deployPath)
+        
+        projectName = Utils().getProjectName(gitLocation: repository)
+        
+        if BuildDeploy.shared.isDeploy {
+            // 正在部署中
+            response.setBody(string: "{\"code\": 1,\"msg\": \"busy\"}")
+        }else {
+            // 服务空闲
+            response.setBody(string: "{\"code\": 0,\"msg\": \"start task\"}")
+        }
         
         response.completed()
     }
