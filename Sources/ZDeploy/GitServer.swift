@@ -21,7 +21,7 @@ public class GitServer {
         
         if !isDeploy {
             if !isInstallGit() {
-                print("[WRONG]please install git!")
+                printLog(message: "please install git!" , type:.error)
             }else {
                 let projectPath = workPath + "/" + projectName
                 if !Dir(projectPath).exists {

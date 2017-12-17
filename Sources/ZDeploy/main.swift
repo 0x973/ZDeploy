@@ -19,6 +19,12 @@ var port = 9999
 var repository = empty // 仓库地址,用于拉取代码
 var deployPath = empty  // 部署路径
 var projectName = empty  // 项目名,不需要外部传入自动根据传入仓库地址计算
+// 整体架构
+// 手动调用服务, 自动化拉取代码 -> 自动化编译swift代码(传入参数优化代码) -> 自动化调用shell命令处理旧文件 -> 重启服务  -> 完成
+
+
+Utils().getPackageName(packagePath: "/Users/any/Desktop/Kedar/Package.swift")
+
 
 func handler(data: [String:Any]) throws -> RequestHandler {
     return {
@@ -37,8 +43,8 @@ func statusHandler(data: [String:Any]) throws -> RequestHandler {
         response.setHeader(.contentType, value: "application/json")
         response.status = .ok
         
-        response.setBody(string: "{\"code\": 0}") // 空闲状态
-        response.setBody(string: "{\"code\": 1}") // 部署中
+        // response.setBody(string: "{\"code\": 0}") // 空闲状态
+        // response.setBody(string: "{\"code\": 1}") // 部署中
         
         response.completed()
     }
