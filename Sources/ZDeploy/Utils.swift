@@ -50,29 +50,4 @@ class Utils {
         return name
     }
     
-    
-    
-    public func getPackageName(packagePath: String) -> String {
-        
-        if packagePath.isEmpty {
-            return empty
-        }
-        
-        do {
-            let fileContents = try String.init(contentsOfFile: packagePath, encoding: .utf8)
-            print(fileContents)
-            
-        }catch {
-            print("读取package出错啦!!\(error)")
-        }
-        
-        
-        return empty
-        
-        
-    }
-    
-    
-    
-    
 }

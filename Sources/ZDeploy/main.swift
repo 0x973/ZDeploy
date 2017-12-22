@@ -19,11 +19,10 @@ var port = 9999
 var repository = empty // 仓库地址,用于拉取代码
 var deployPath = empty  // 部署路径
 var projectName = empty  // 项目名,不需要外部传入自动根据传入仓库地址计算
+var name = empty
+
 // 整体架构
 // 手动调用服务, 自动化拉取代码 -> 自动化编译swift代码(传入参数优化代码) -> 自动化调用shell命令处理旧文件 -> 重启服务  -> 完成
-
-
-Utils().getPackageName(packagePath: "/Users/any/Desktop/Kedar/Package.swift")
 
 
 func handler(data: [String:Any]) throws -> RequestHandler {
@@ -67,17 +66,22 @@ func startDeploy(data: [String:Any]) throws -> RequestHandler {
         
         print(deployPath)
         
+        name = json["name"].string ?? empty
+        
+        print(name)
+        
         projectName = Utils().getProjectName(gitLocation: repository)
         
         if BuildDeploy.shared.isDeploy {
             // 正在部署中
             response.setBody(string: "{\"code\": 1,\"msg\": \"busy\"}")
+            response.completed()
         }else {
             // 服务空闲
             response.setBody(string: "{\"code\": 0,\"msg\": \"start task\"}")
+            response.completed()
+            GitServer().main()
         }
-        
-        response.completed()
     }
 }
 
